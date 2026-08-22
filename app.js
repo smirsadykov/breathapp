@@ -138,11 +138,19 @@ function showScreen(id) {
 
 // ---------- Sound ----------
 let audioCtx = null;
-function beep(freq, durMs = 350) {
+// создаёт/будит аудиоконтекст без звука — вызывается из клика, чтобы iOS разрешил звук
+function ensureAudio() {
   if (!state.sound) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch { /* звук недоступен */ }
+}
+function beep(freq, durMs = 350) {
+  if (!state.sound) return;
+  try {
+    ensureAudio();
+    if (!audioCtx) return;
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.type = 'sine';
@@ -180,6 +188,7 @@ function fmtTime(sec) {
 }
 
 function startSession() {
+  cancelAnimationFrame(session.raf); // защита от двойного тапа — не плодим второй цикл
   session.technique = TECHNIQUES.find((t) => t.id === state.techniqueId) || TECHNIQUES[0];
   session.running = true;
   session.paused = false;
@@ -188,10 +197,12 @@ function startSession() {
   session.phaseEndAt = performance.now(); // сразу перейдём к первой фазе
   session.fromScale = 0.55;
   $('session-technique').textContent = session.technique.name;
+  $('time-left').textContent = fmtTime(state.minutes * 60);
+  $('phase-count').textContent = '';
   $('btn-pause').textContent = 'Пауза';
   showScreen('screen-session');
   if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (session.lock = l)).catch(() => {});
-  beep(PHASE_FREQ['Вдох']); // разблокировать аудио по клику
+  ensureAudio(); // разблокировать аудио по клику, без звука
   session.raf = requestAnimationFrame(tick);
 }
 
@@ -274,6 +285,21 @@ function quitSession() {
   showScreen('screen-home');
   renderStats();
 }
+
+// возврат из фона: рабочая блокировка экрана слетает, фаза устаревает —
+// заново берём wake lock и мягко перезапускаем текущую фазу без сигнала
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !session.running || session.paused) return;
+  if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (session.lock = l)).catch(() => {});
+  const now = performance.now();
+  if (now >= session.phaseEndAt && now < session.endAt) {
+    const p = session.technique.phases[session.phaseIdx];
+    if (p) {
+      session.phaseStartAt = now;
+      session.phaseEndAt = now + p.dur * 1000;
+    }
+  }
+});
 
 // ---------- Wire up ----------
 $('btn-start').addEventListener('click', startSession);
