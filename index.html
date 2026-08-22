@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Дыхание — практика каждый день</title>
+  <meta name="description" content="Дыхательные практики: квадратное дыхание, 4-7-8, когерентное дыхание. Работает офлайн.">
+  <meta name="theme-color" content="#0b1026">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Дыхание">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+
+    <!-- Home screen -->
+    <section id="screen-home" class="screen active">
+      <header class="top">
+        <h1>Дыхание</h1>
+        <div class="streak" id="streak-box">
+          <span id="streak-days">0</span> дн. подряд · <span id="total-sessions">0</span> сессий
+        </div>
+      </header>
+
+      <div class="techniques" id="technique-list"></div>
+
+      <div class="card options">
+        <div class="opt-row">
+          <span class="opt-label">Длительность</span>
+          <div class="seg" id="duration-seg">
+            <button data-min="1">1 мин</button>
+            <button data-min="3" class="on">3 мин</button>
+            <button data-min="5">5 мин</button>
+            <button data-min="10">10 мин</button>
+          </div>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">Звук</span>
+          <button class="toggle on" id="toggle-sound" aria-pressed="true"></button>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">Вибрация</span>
+          <button class="toggle on" id="toggle-vibro" aria-pressed="true"></button>
+        </div>
+      </div>
+
+      <button class="btn-start" id="btn-start">Начать</button>
+    </section>
+
+    <!-- Session screen -->
+    <section id="screen-session" class="screen">
+      <header class="top session-top">
+        <button class="btn-icon" id="btn-close" aria-label="Завершить">✕</button>
+        <div class="session-title" id="session-technique"></div>
+        <div class="time-left" id="time-left">3:00</div>
+      </header>
+
+      <div class="breath-stage">
+        <div class="ring ring-outer"></div>
+        <div class="ring ring-guide" id="ring-guide"></div>
+        <div class="bubble" id="bubble">
+          <div class="phase-name" id="phase-name">Приготовься</div>
+          <div class="phase-count" id="phase-count"></div>
+        </div>
+      </div>
+
+      <div class="hint" id="session-hint">Дыши вместе с кругом</div>
+      <button class="btn-pause" id="btn-pause">Пауза</button>
+    </section>
+
+    <!-- Done screen -->
+    <section id="screen-done" class="screen">
+      <div class="done-wrap">
+        <div class="done-emoji">🌿</div>
+        <h2>Сессия завершена</h2>
+        <p id="done-summary"></p>
+        <p class="done-streak" id="done-streak"></p>
+        <button class="btn-start" id="btn-again">Ещё раз</button>
+        <button class="btn-ghost" id="btn-home">На главную</button>
+      </div>
+    </section>
+
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
