@@ -1,47 +1,108 @@
-// «Дыхание» — простое приложение дыхательных практик (PWA)
+// «Дыхание» / "Breathe" — простое приложение дыхательных практик (PWA)
+
+const I18N = {
+  ru: {
+    title: 'Дыхание',
+    doc_title: 'Дыхание — практика каждый день',
+    days_row: 'дн. подряд',
+    sessions: 'сессий',
+    duration: 'Длительность',
+    min: 'мин',
+    sound: 'Звук',
+    vibro: 'Вибрация',
+    start: 'Начать',
+    pause: 'Пауза',
+    resume: 'Продолжить',
+    paused: 'Пауза',
+    get_ready: 'Приготовься',
+    hint: 'Дыши вместе с кругом',
+    done_title: 'Сессия завершена',
+    total_label: 'Всего сессий',
+    streak_fire: (n) => `🔥 ${n} дней подряд`,
+    streak_first: 'Первый день серии — приходи завтра',
+    again: 'Ещё раз',
+    home: 'На главную',
+    phase: { inhale: 'Вдох', hold: 'Задержка', exhale: 'Выдох' },
+  },
+  en: {
+    title: 'Breathe',
+    doc_title: 'Breathe — a daily practice',
+    days_row: 'day streak',
+    sessions: 'sessions',
+    duration: 'Duration',
+    min: 'min',
+    sound: 'Sound',
+    vibro: 'Vibration',
+    start: 'Start',
+    pause: 'Pause',
+    resume: 'Resume',
+    paused: 'Paused',
+    get_ready: 'Get ready',
+    hint: 'Breathe with the circle',
+    done_title: 'Session complete',
+    total_label: 'Total sessions',
+    streak_fire: (n) => `🔥 ${n} days in a row`,
+    streak_first: 'Day one of your streak — come back tomorrow',
+    again: 'Again',
+    home: 'Home',
+    phase: { inhale: 'Inhale', hold: 'Hold', exhale: 'Exhale' },
+  },
+};
 
 const TECHNIQUES = [
   {
     id: 'box',
-    name: 'Квадратное дыхание',
+    name: { ru: 'Квадратное дыхание', en: 'Box breathing' },
     pattern: '4-4-4-4',
-    desc: 'Ровный квадрат: вдох, задержка, выдох, задержка. Снимает стресс, собирает фокус.',
+    desc: {
+      ru: 'Ровный квадрат: вдох, задержка, выдох, задержка. Снимает стресс, собирает фокус.',
+      en: 'An even square: inhale, hold, exhale, hold. Relieves stress, sharpens focus.',
+    },
     phases: [
-      { name: 'Вдох', dur: 4, to: 1 },
-      { name: 'Задержка', dur: 4, to: 1 },
-      { name: 'Выдох', dur: 4, to: 0.55 },
-      { name: 'Задержка', dur: 4, to: 0.55 },
+      { key: 'inhale', dur: 4, to: 1 },
+      { key: 'hold', dur: 4, to: 1 },
+      { key: 'exhale', dur: 4, to: 0.55 },
+      { key: 'hold', dur: 4, to: 0.55 },
     ],
   },
   {
     id: '478',
-    name: 'Дыхание 4-7-8',
+    name: { ru: 'Дыхание 4-7-8', en: '4-7-8 breathing' },
     pattern: '4-7-8',
-    desc: 'Длинный выдох успокаивает нервную систему. Хорошо перед сном.',
+    desc: {
+      ru: 'Длинный выдох успокаивает нервную систему. Хорошо перед сном.',
+      en: 'A long exhale calms the nervous system. Good before sleep.',
+    },
     phases: [
-      { name: 'Вдох', dur: 4, to: 1 },
-      { name: 'Задержка', dur: 7, to: 1 },
-      { name: 'Выдох', dur: 8, to: 0.55 },
+      { key: 'inhale', dur: 4, to: 1 },
+      { key: 'hold', dur: 7, to: 1 },
+      { key: 'exhale', dur: 8, to: 0.55 },
     ],
   },
   {
     id: 'coherent',
-    name: 'Когерентное дыхание',
+    name: { ru: 'Когерентное дыхание', en: 'Coherent breathing' },
     pattern: '5.5-5.5',
-    desc: 'Около 5–6 дыханий в минуту. Выравнивает пульс и давление, базовая практика на каждый день.',
+    desc: {
+      ru: 'Около 5–6 дыханий в минуту. Выравнивает пульс и давление, базовая практика на каждый день.',
+      en: 'About 5–6 breaths per minute. Evens out heart rate and blood pressure — a solid daily practice.',
+    },
     phases: [
-      { name: 'Вдох', dur: 5.5, to: 1 },
-      { name: 'Выдох', dur: 5.5, to: 0.55 },
+      { key: 'inhale', dur: 5.5, to: 1 },
+      { key: 'exhale', dur: 5.5, to: 0.55 },
     ],
   },
   {
     id: 'calm',
-    name: 'Спокойствие 4-6',
+    name: { ru: 'Спокойствие 4-6', en: 'Calm 4-6' },
     pattern: '4-6',
-    desc: 'Выдох длиннее вдоха — мягкое торможение. Подходит новичкам.',
+    desc: {
+      ru: 'Выдох длиннее вдоха — мягкое торможение. Подходит новичкам.',
+      en: 'Exhale longer than inhale — a gentle slowdown. Good for beginners.',
+    },
     phases: [
-      { name: 'Вдох', dur: 4, to: 1 },
-      { name: 'Выдох', dur: 6, to: 0.55 },
+      { key: 'inhale', dur: 4, to: 1 },
+      { key: 'exhale', dur: 6, to: 0.55 },
     ],
   },
 ];
@@ -53,7 +114,12 @@ const state = {
   minutes: Number(localStorage.getItem('bd_minutes')) || 3,
   sound: localStorage.getItem('bd_sound') !== '0',
   vibro: localStorage.getItem('bd_vibro') !== '0',
+  lang: localStorage.getItem('bd_lang') ||
+    ((navigator.language || 'ru').toLowerCase().startsWith('ru') ? 'ru' : 'en'),
 };
+
+const t = (key) => I18N[state.lang][key];
+const phaseName = (key) => I18N[state.lang].phase[key];
 
 // ---------- Stats (streak) ----------
 function loadStats() {
@@ -89,19 +155,39 @@ function renderStats() {
   $('total-sessions').textContent = s.total || 0;
 }
 
+// ---------- Language ----------
+function applyLang() {
+  document.documentElement.lang = state.lang;
+  document.title = t('doc_title');
+  for (const el of document.querySelectorAll('[data-i18n]')) {
+    el.textContent = t(el.dataset.i18n);
+  }
+  for (const b of $('duration-seg').querySelectorAll('button')) {
+    b.textContent = `${b.dataset.min} ${t('min')}`;
+  }
+  $('lang-toggle').textContent = state.lang === 'ru' ? 'EN' : 'RU';
+  if (session.running) {
+    $('session-technique').textContent = session.technique.name[state.lang];
+    const p = session.technique.phases[session.phaseIdx];
+    $('phase-name').textContent = session.paused ? t('paused') : (p ? phaseName(p.key) : t('get_ready'));
+    $('btn-pause').textContent = session.paused ? t('resume') : t('pause');
+  }
+  renderTechniques();
+}
+
 // ---------- Home UI ----------
 function renderTechniques() {
   const list = $('technique-list');
   list.innerHTML = '';
-  for (const t of TECHNIQUES) {
+  for (const tech of TECHNIQUES) {
     const card = document.createElement('button');
-    card.className = 'tech-card' + (t.id === state.techniqueId ? ' on' : '');
+    card.className = 'tech-card' + (tech.id === state.techniqueId ? ' on' : '');
     card.innerHTML = `
-      <div class="tech-name"><span>${t.name}</span><span class="tech-pattern">${t.pattern}</span></div>
-      <div class="tech-desc">${t.desc}</div>`;
+      <div class="tech-name"><span>${tech.name[state.lang]}</span><span class="tech-pattern">${tech.pattern}</span></div>
+      <div class="tech-desc">${tech.desc[state.lang]}</div>`;
     card.addEventListener('click', () => {
-      state.techniqueId = t.id;
-      localStorage.setItem('bd_technique', t.id);
+      state.techniqueId = tech.id;
+      localStorage.setItem('bd_technique', tech.id);
       renderTechniques();
     });
     list.appendChild(card);
@@ -130,6 +216,12 @@ function initOptions() {
   };
   bindToggle('toggle-sound', 'sound');
   bindToggle('toggle-vibro', 'vibro');
+
+  $('lang-toggle').addEventListener('click', () => {
+    state.lang = state.lang === 'ru' ? 'en' : 'ru';
+    localStorage.setItem('bd_lang', state.lang);
+    applyLang();
+  });
 }
 
 function showScreen(id) {
@@ -163,7 +255,7 @@ function beep(freq, durMs = 350) {
     o.stop(audioCtx.currentTime + durMs / 1000 + 0.05);
   } catch { /* звук недоступен — молча продолжаем */ }
 }
-const PHASE_FREQ = { 'Вдох': 440, 'Выдох': 294, 'Задержка': 370 };
+const PHASE_FREQ = { inhale: 440, exhale: 294, hold: 370 };
 
 function buzz() {
   if (state.vibro && navigator.vibrate) navigator.vibrate(60);
@@ -179,6 +271,7 @@ const session = {
   phaseIdx: -1,
   phaseEndAt: 0,
   fromScale: 0.55,
+  curScale: 0.55,
   raf: 0,
 };
 
@@ -189,17 +282,20 @@ function fmtTime(sec) {
 
 function startSession() {
   cancelAnimationFrame(session.raf); // защита от двойного тапа — не плодим второй цикл
-  session.technique = TECHNIQUES.find((t) => t.id === state.techniqueId) || TECHNIQUES[0];
+  session.technique = TECHNIQUES.find((x) => x.id === state.techniqueId) || TECHNIQUES[0];
   session.running = true;
   session.paused = false;
   session.endAt = performance.now() + state.minutes * 60000;
   session.phaseIdx = -1;
   session.phaseEndAt = performance.now(); // сразу перейдём к первой фазе
   session.fromScale = 0.55;
-  $('session-technique').textContent = session.technique.name;
+  session.curScale = 0.55;
+  $('bubble').style.transform = 'scale(0.55)';
+  $('session-technique').textContent = session.technique.name[state.lang];
+  $('phase-name').textContent = t('get_ready');
   $('time-left').textContent = fmtTime(state.minutes * 60);
   $('phase-count').textContent = '';
-  $('btn-pause').textContent = 'Пауза';
+  $('btn-pause').textContent = t('pause');
   showScreen('screen-session');
   if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (session.lock = l)).catch(() => {});
   ensureAudio(); // разблокировать аудио по клику, без звука
@@ -214,8 +310,8 @@ function nextPhase(now) {
   const p = phases[session.phaseIdx];
   session.phaseStartAt = now;
   session.phaseEndAt = now + p.dur * 1000;
-  $('phase-name').textContent = p.name;
-  beep(PHASE_FREQ[p.name] || 370);
+  $('phase-name').textContent = phaseName(p.key);
+  beep(PHASE_FREQ[p.key] || 370);
   buzz();
 }
 
@@ -229,8 +325,9 @@ function tick(now) {
   if (now >= session.phaseEndAt) nextPhase(now);
 
   const p = session.technique.phases[session.phaseIdx];
-  const t = Math.min(1, (now - session.phaseStartAt) / (p.dur * 1000));
-  const scale = session.fromScale + (p.to - session.fromScale) * easeInOut(t);
+  const k = Math.min(1, (now - session.phaseStartAt) / (p.dur * 1000));
+  const scale = session.fromScale + (p.to - session.fromScale) * easeInOut(k);
+  session.curScale = scale;
   $('bubble').style.transform = `scale(${scale.toFixed(4)})`;
 
   const phaseLeft = (session.phaseEndAt - now) / 1000;
@@ -241,22 +338,22 @@ function tick(now) {
 }
 
 function togglePause() {
-  if (!session.running) return;
+  if (!session.running || session.phaseIdx < 0) return; // до первой фазы паузить нечего
   const now = performance.now();
   if (!session.paused) {
     session.paused = true;
     session.pausedLeft = session.endAt - now;
     session.pausedPhaseLeft = session.phaseEndAt - now;
     session.pausedPhaseElapsed = now - session.phaseStartAt;
-    $('btn-pause').textContent = 'Продолжить';
-    $('phase-name').textContent = 'Пауза';
+    $('btn-pause').textContent = t('resume');
+    $('phase-name').textContent = t('paused');
   } else {
     session.paused = false;
     session.endAt = now + session.pausedLeft;
     session.phaseEndAt = now + session.pausedPhaseLeft;
     session.phaseStartAt = now - session.pausedPhaseElapsed;
-    $('phase-name').textContent = session.technique.phases[session.phaseIdx].name;
-    $('btn-pause').textContent = 'Пауза';
+    $('phase-name').textContent = phaseName(session.technique.phases[session.phaseIdx].key);
+    $('btn-pause').textContent = t('pause');
     session.raf = requestAnimationFrame(tick);
   }
 }
@@ -271,10 +368,8 @@ function finishSession() {
   stopSession();
   const s = recordSession(state.minutes);
   $('done-summary').textContent =
-    `${session.technique.name} · ${state.minutes} мин. Всего сессий: ${s.total}.`;
-  $('done-streak').textContent = s.streak > 1
-    ? `🔥 ${s.streak} дней подряд`
-    : 'Первый день серии — приходи завтра';
+    `${session.technique.name[state.lang]} · ${state.minutes} ${t('min')}. ${t('total_label')}: ${s.total}.`;
+  $('done-streak').textContent = s.streak > 1 ? t('streak_fire')(s.streak) : t('streak_first');
   if (state.vibro && navigator.vibrate) navigator.vibrate([80, 60, 80]);
   showScreen('screen-done');
   renderStats();
@@ -287,7 +382,7 @@ function quitSession() {
 }
 
 // возврат из фона: рабочая блокировка экрана слетает, фаза устаревает —
-// заново берём wake lock и мягко перезапускаем текущую фазу без сигнала
+// заново берём wake lock и мягко перезапускаем текущую фазу с текущего размера круга
 document.addEventListener('visibilitychange', () => {
   if (document.hidden || !session.running || session.paused) return;
   if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (session.lock = l)).catch(() => {});
@@ -295,6 +390,7 @@ document.addEventListener('visibilitychange', () => {
   if (now >= session.phaseEndAt && now < session.endAt) {
     const p = session.technique.phases[session.phaseIdx];
     if (p) {
+      session.fromScale = session.curScale;
       session.phaseStartAt = now;
       session.phaseEndAt = now + p.dur * 1000;
     }
@@ -308,7 +404,7 @@ $('btn-pause').addEventListener('click', togglePause);
 $('btn-close').addEventListener('click', quitSession);
 $('btn-home').addEventListener('click', () => showScreen('screen-home'));
 
-renderTechniques();
+applyLang();
 initOptions();
 renderStats();
 
