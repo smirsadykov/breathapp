@@ -22,7 +22,7 @@ const I18N = {
     streak_first: 'Первый день серии — приходи завтра',
     again: 'Ещё раз',
     home: 'На главную',
-    phase: { inhale: 'Вдох', hold: 'Задержка', exhale: 'Выдох' },
+    phase: { inhale: 'Вдох', inhale2: 'Ещё вдох', hold: 'Задержка', exhale: 'Выдох' },
   },
   en: {
     title: 'Breathe',
@@ -45,9 +45,13 @@ const I18N = {
     streak_first: 'Day one of your streak — come back tomorrow',
     again: 'Again',
     home: 'Home',
-    phase: { inhale: 'Inhale', hold: 'Hold', exhale: 'Exhale' },
+    phase: { inhale: 'Inhale', inhale2: 'Inhale again', hold: 'Hold', exhale: 'Exhale' },
   },
 };
+
+// «немой» разворот: круг замирает на ~0.4с без сигнала и смены надписи —
+// вставляется там, где вдох и выдох стыкуются напрямую, без задержки
+const TURN = (at) => ({ key: 'turn', dur: 0.4, to: at });
 
 const TECHNIQUES = [
   {
@@ -77,6 +81,7 @@ const TECHNIQUES = [
       { key: 'inhale', dur: 4, to: 1 },
       { key: 'hold', dur: 7, to: 1 },
       { key: 'exhale', dur: 8, to: 0.55 },
+      TURN(0.55),
     ],
   },
   {
@@ -89,7 +94,9 @@ const TECHNIQUES = [
     },
     phases: [
       { key: 'inhale', dur: 5.5, to: 1 },
+      TURN(1),
       { key: 'exhale', dur: 5.5, to: 0.55 },
+      TURN(0.55),
     ],
   },
   {
@@ -102,7 +109,55 @@ const TECHNIQUES = [
     },
     phases: [
       { key: 'inhale', dur: 4, to: 1 },
+      TURN(1),
       { key: 'exhale', dur: 6, to: 0.55 },
+      TURN(0.55),
+    ],
+  },
+  {
+    id: 'triangle',
+    name: { ru: 'Треугольное дыхание', en: 'Triangle breathing' },
+    pattern: '4-4-4',
+    desc: {
+      ru: 'Как квадрат, но без задержки после выдоха. Проще для начала, тот же эффект собранности.',
+      en: 'Like the box, but without the hold after exhaling. Easier to start with, same focusing effect.',
+    },
+    phases: [
+      { key: 'inhale', dur: 4, to: 1 },
+      { key: 'hold', dur: 4, to: 1 },
+      { key: 'exhale', dur: 4, to: 0.55 },
+      TURN(0.55),
+    ],
+  },
+  {
+    id: 'sigh',
+    name: { ru: 'Двойной вдох', en: 'Double inhale' },
+    pattern: '2-1-6',
+    desc: {
+      ru: 'Два вдоха подряд и длинный выдох. Быстрый сброс напряжения — заметно уже через пару циклов.',
+      en: 'Two inhales in a row, then a long exhale. Quick tension release — you feel it within a couple of cycles.',
+    },
+    phases: [
+      { key: 'inhale', dur: 2, to: 0.82 },
+      { key: 'inhale2', dur: 1, to: 1 },
+      TURN(1),
+      { key: 'exhale', dur: 6, to: 0.55 },
+      TURN(0.55),
+    ],
+  },
+  {
+    id: 'energize',
+    name: { ru: 'Бодрость 6-2', en: 'Energize 6-2' },
+    pattern: '6-2',
+    desc: {
+      ru: 'Длинный вдох и короткий выдох мягко бодрят. Утром или перед тренировкой.',
+      en: 'A long inhale with a short exhale gently wakes you up. Mornings or before a workout.',
+    },
+    phases: [
+      { key: 'inhale', dur: 6, to: 1 },
+      TURN(1),
+      { key: 'exhale', dur: 2, to: 0.55 },
+      TURN(0.55),
     ],
   },
 ];
@@ -169,7 +224,8 @@ function applyLang() {
   if (session.running) {
     $('session-technique').textContent = session.technique.name[state.lang];
     const p = session.technique.phases[session.phaseIdx];
-    $('phase-name').textContent = session.paused ? t('paused') : (p ? phaseName(p.key) : t('get_ready'));
+    const key = p ? (p.key === 'turn' ? session.lastMoveKey : p.key) : null;
+    $('phase-name').textContent = session.paused ? t('paused') : (key ? phaseName(key) : t('get_ready'));
     $('btn-pause').textContent = session.paused ? t('resume') : t('pause');
   }
   renderTechniques();
@@ -257,7 +313,7 @@ function beep(freq, durMs = 700) {
     o.stop(t0 + durMs / 1000 + 0.05);
   } catch { /* звук недоступен — молча продолжаем */ }
 }
-const PHASE_FREQ = { inhale: 440, exhale: 294, hold: 370 };
+const PHASE_FREQ = { inhale: 440, inhale2: 494, exhale: 294, hold: 370 };
 
 function buzz() {
   if (state.vibro && navigator.vibrate) navigator.vibrate(60);
@@ -292,6 +348,7 @@ function startSession() {
   session.phaseEndAt = performance.now(); // сразу перейдём к первой фазе
   session.fromScale = 0.55;
   session.curScale = 0.55;
+  session.lastMoveKey = null;
   $('bubble').style.transform = 'scale(0.55)';
   $('session-technique').textContent = session.technique.name[state.lang];
   $('phase-name').textContent = t('get_ready');
@@ -312,9 +369,12 @@ function nextPhase(now) {
   const p = phases[session.phaseIdx];
   session.phaseStartAt = now;
   session.phaseEndAt = now + p.dur * 1000;
-  $('phase-name').textContent = phaseName(p.key);
-  beep(PHASE_FREQ[p.key] || 370);
-  buzz();
+  if (p.key !== 'turn') {
+    session.lastMoveKey = p.key;
+    $('phase-name').textContent = phaseName(p.key);
+    beep(PHASE_FREQ[p.key] || 370);
+    buzz();
+  }
 }
 
 // синусоида — естественный профиль дыхания: без рывка в середине и «парковки» на стыках фаз
@@ -335,7 +395,7 @@ function tick(now) {
   $('bubble').style.transform = `scale(${scale.toFixed(4)})`;
 
   const phaseLeft = (session.phaseEndAt - now) / 1000;
-  $('phase-count').textContent = Math.ceil(phaseLeft);
+  if (p.key !== 'turn') $('phase-count').textContent = Math.ceil(phaseLeft);
   $('time-left').textContent = fmtTime((session.endAt - now) / 1000);
 
   session.raf = requestAnimationFrame(tick);
@@ -356,7 +416,8 @@ function togglePause() {
     session.endAt = now + session.pausedLeft;
     session.phaseEndAt = now + session.pausedPhaseLeft;
     session.phaseStartAt = now - session.pausedPhaseElapsed;
-    $('phase-name').textContent = phaseName(session.technique.phases[session.phaseIdx].key);
+    const cur = session.technique.phases[session.phaseIdx];
+    $('phase-name').textContent = phaseName(cur.key === 'turn' ? session.lastMoveKey : cur.key);
     $('btn-pause').textContent = t('pause');
     session.raf = requestAnimationFrame(tick);
   }
