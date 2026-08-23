@@ -1,4 +1,4 @@
-const CACHE = 'breathe-daily-v6';
+const CACHE = 'breathe-daily-v7';
 const ASSETS = [
   '.',
   'index.html',
@@ -12,7 +12,14 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // качаем мимо HTTP-кэша браузера, иначе в кэш SW попадают устаревшие файлы
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => Promise.all(ASSETS.map((u) =>
+        fetch(u, { cache: 'no-cache' }).then((r) => { if (r.ok) return c.put(u, r); })
+      )))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {

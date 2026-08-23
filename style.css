@@ -47,6 +47,16 @@ h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.3px; }
 }
 .streak #streak-days { color: var(--accent2); font-weight: 700; }
 
+.tabs {
+  display: flex; gap: 4px; background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px; padding: 4px; margin-bottom: 14px;
+}
+.tab {
+  flex: 1; border: 0; background: transparent; color: var(--dim); cursor: pointer;
+  font-size: 14px; font-weight: 650; padding: 9px; border-radius: 9px;
+}
+.tab.on { background: var(--card-on); color: var(--text); }
+
 .techniques { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 
 .tech-card {
@@ -148,6 +158,32 @@ h1 { font-size: 26px; font-weight: 700; letter-spacing: 0.3px; }
   border: 0; cursor: pointer; width: 100%;
   background: var(--card); color: var(--text); font-size: 16px; font-weight: 650;
   padding: 15px; border-radius: 16px;
+}
+
+/* ---------- Meditation ---------- */
+.medit-stage {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 40px; min-height: 320px; text-align: center;
+}
+.medit-orb {
+  width: 150px; height: 150px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(127, 227, 195, 0.45), rgba(110, 168, 255, 0.35) 55%, rgba(110, 168, 255, 0.1));
+  box-shadow: 0 0 50px rgba(110, 168, 255, 0.3), inset 0 0 30px rgba(255, 255, 255, 0.1);
+  animation: orb-pulse 9s ease-in-out infinite;
+}
+@keyframes orb-pulse {
+  0%, 100% { transform: scale(0.92); }
+  50% { transform: scale(1.06); }
+}
+.medit-prompt {
+  min-height: 76px; max-width: 320px; padding: 0 8px;
+  font-size: 17px; line-height: 1.5; color: var(--text);
+  opacity: 0;
+}
+.medit-prompt.show { animation: prompt-in 1.4s ease forwards; }
+@keyframes prompt-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- Done ---------- */

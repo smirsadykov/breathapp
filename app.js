@@ -26,6 +26,12 @@ const I18N = {
     breathe_in: 'Вдохнуть',
     holds: 'Задержки',
     sec: 'с',
+    tab_breath: 'Дыхание',
+    tab_medit: 'Медитация',
+    ambient: 'Фон',
+    amb_off: 'Тишина',
+    amb_rain: 'Дождь',
+    amb_ocean: 'Океан',
     phase: { inhale: 'Вдох', inhale2: 'Ещё вдох', hold: 'Задержка', exhale: 'Выдох', retention: 'Задержка' },
   },
   en: {
@@ -53,6 +59,12 @@ const I18N = {
     breathe_in: 'Breathe in',
     holds: 'Holds',
     sec: 's',
+    tab_breath: 'Breathing',
+    tab_medit: 'Meditation',
+    ambient: 'Background',
+    amb_off: 'Silence',
+    amb_rain: 'Rain',
+    amb_ocean: 'Ocean',
     phase: { inhale: 'Inhale', inhale2: 'Inhale again', hold: 'Hold', exhale: 'Exhale', retention: 'Hold' },
   },
 };
@@ -198,6 +210,81 @@ const TECHNIQUES = [
   },
 ];
 
+// медитации: экранные подсказки — собственные тексты, распределяются по длительности сессии
+const MEDITATIONS = [
+  {
+    id: 'breath_focus',
+    name: { ru: 'Наблюдение за дыханием', en: 'Breath awareness' },
+    tag: { ru: 'гид', en: 'guided' },
+    desc: {
+      ru: 'Базовая практика: внимание на дыхании, мягкое возвращение, когда унесло в мысли.',
+      en: 'The core practice: attention on the breath, gently coming back when the mind wanders.',
+    },
+    prompts: [
+      { ru: 'Сядь удобно, выпрями спину. Закрой глаза.', en: 'Sit comfortably, straighten your back. Close your eyes.' },
+      { ru: 'Найди место, где дыхание ощущается ярче всего: ноздри, грудь или живот.', en: 'Find where the breath feels most vivid: nostrils, chest or belly.' },
+      { ru: 'Просто наблюдай за вдохом и выдохом. Ничего не меняй.', en: 'Just watch the inhale and the exhale. Change nothing.' },
+      { ru: 'Мысли будут приходить — это нормально. Заметил — вернись к дыханию.', en: 'Thoughts will come — that is normal. Notice, then return to the breath.' },
+      { ru: 'Попробуй заметить короткую паузу между вдохом и выдохом.', en: 'Try to notice the small gap between inhale and exhale.' },
+      { ru: 'Каждый вдох — как первый. Смотри на него с интересом.', en: 'Treat every breath like the first one. Watch it with curiosity.' },
+      { ru: 'Унесло в мысли? Это и есть практика: заметить и вернуться.', en: 'Mind wandered? That IS the practice: notice and come back.' },
+      { ru: 'Последние минуты — просто дыхание и ты.', en: 'For the last minutes — just you and the breath.' },
+      { ru: 'Сделай вдох поглубже и мягко открой глаза.', en: 'Take a deeper breath and gently open your eyes.' },
+    ],
+  },
+  {
+    id: 'body_scan',
+    name: { ru: 'Сканирование тела', en: 'Body scan' },
+    tag: { ru: 'гид', en: 'guided' },
+    desc: {
+      ru: 'Медленно проходим вниманием по телу от стоп до макушки. Хорошо снимает напряжение и помогает уснуть.',
+      en: 'Slowly move attention through the body from feet to head. Releases tension, good before sleep.',
+    },
+    prompts: [
+      { ru: 'Устройся удобно. Закрой глаза. Три спокойных вдоха и выдоха.', en: 'Get comfortable. Close your eyes. Three calm breaths in and out.' },
+      { ru: 'Почувствуй точки опоры: стопы, таз, спину.', en: 'Feel your points of support: feet, hips, back.' },
+      { ru: 'Перенеси внимание в стопы. Просто замечай ощущения: тепло, тяжесть, покалывание.', en: 'Bring attention to your feet. Just notice sensations: warmth, weight, tingling.' },
+      { ru: 'Медленно поднимайся вниманием по ногам к тазу.', en: 'Slowly move attention up the legs to the hips.' },
+      { ru: 'Живот и грудь. Почувствуй, как они двигаются с дыханием.', en: 'Belly and chest. Feel them move with the breath.' },
+      { ru: 'Плечи. Если есть напряжение — не исправляй, просто заметь.', en: 'Shoulders. If there is tension, do not fix it — just notice it.' },
+      { ru: 'Руки — до кончиков пальцев.', en: 'Arms — all the way to the fingertips.' },
+      { ru: 'Шея и лицо. Отпусти челюсть, разгладь лоб.', en: 'Neck and face. Let the jaw go loose, soften the forehead.' },
+      { ru: 'Теперь всё тело целиком — одно поле ощущений.', en: 'Now the whole body at once — one field of sensation.' },
+      { ru: 'Побудь в этом. Ушло внимание — мягко верни к телу.', en: 'Stay with it. If attention drifts, gently bring it back to the body.' },
+      { ru: 'Пошевели пальцами, вдохни поглубже и открой глаза.', en: 'Wiggle your fingers, take a deeper breath and open your eyes.' },
+    ],
+  },
+  {
+    id: 'clouds',
+    name: { ru: 'Мысли как облака', en: 'Thoughts as clouds' },
+    tag: { ru: 'гид', en: 'guided' },
+    desc: {
+      ru: 'Учимся замечать мысли со стороны, называть их и отпускать, не втягиваясь.',
+      en: 'Learn to notice thoughts from the outside, label them and let them drift on.',
+    },
+    prompts: [
+      { ru: 'Закрой глаза. Дай телу устроиться.', en: 'Close your eyes. Let the body settle.' },
+      { ru: 'Представь: мысли — облака, а ты — небо.', en: 'Imagine: thoughts are clouds, and you are the sky.' },
+      { ru: 'Заметил мысль — назови её про себя: «планирую», «вспоминаю», «переживаю».', en: 'When you notice a thought, name it silently: "planning", "remembering", "worrying".' },
+      { ru: 'Назвал — и отпусти. Пусть проплывает.', en: 'Once named — let it go. Let it drift by.' },
+      { ru: 'Не гони облака и не держи их. Небо просто смотрит.', en: 'Do not chase the clouds, do not hold them. The sky just watches.' },
+      { ru: 'Затянуло в историю? Ничего страшного. Заметь — и снова стань небом.', en: 'Pulled into a story? No problem. Notice it — and be the sky again.' },
+      { ru: 'Побудь небом ещё немного.', en: 'Stay the sky a little longer.' },
+      { ru: 'Вдох поглубже. Открой глаза.', en: 'A deeper breath. Open your eyes.' },
+    ],
+  },
+  {
+    id: 'silent',
+    name: { ru: 'Тишина', en: 'Silence' },
+    tag: { ru: 'гонг', en: 'gong' },
+    desc: {
+      ru: 'Без подсказок: гонг в начале и в конце, между ними — только ты. Для тех, кто уже знает, что делать.',
+      en: 'No prompts: a gong at the start and the end, nothing in between. For when you know what to do.',
+    },
+    prompts: [],
+  },
+];
+
 const $ = (id) => document.getElementById(id);
 
 const state = {
@@ -207,6 +294,10 @@ const state = {
   vibro: localStorage.getItem('bd_vibro') !== '0',
   lang: localStorage.getItem('bd_lang') ||
     ((navigator.language || 'ru').toLowerCase().startsWith('ru') ? 'ru' : 'en'),
+  tab: localStorage.getItem('bd_tab') || 'breath',
+  meditationId: localStorage.getItem('bd_meditation') || 'breath_focus',
+  medMinutes: Number(localStorage.getItem('bd_medminutes')) || 10,
+  ambient: localStorage.getItem('bd_ambient') || 'rain',
 };
 
 const t = (key) => I18N[state.lang][key];
@@ -253,10 +344,11 @@ function applyLang() {
   for (const el of document.querySelectorAll('[data-i18n]')) {
     el.textContent = t(el.dataset.i18n);
   }
-  for (const b of $('duration-seg').querySelectorAll('button')) {
-    b.textContent = `${b.dataset.min} ${t('min')}`;
-  }
   $('lang-toggle').textContent = state.lang === 'ru' ? 'EN' : 'RU';
+  if (med.running) {
+    $('medit-title').textContent = med.item.name[state.lang];
+    $('btn-medit-pause').textContent = med.paused ? t('resume') : t('pause');
+  }
   if (session.running) {
     $('session-technique').textContent = session.technique.name[state.lang];
     const p = session.technique.phases[session.phaseIdx];
@@ -273,34 +365,77 @@ function applyLang() {
 function renderTechniques() {
   const list = $('technique-list');
   list.innerHTML = '';
-  for (const tech of TECHNIQUES) {
+  const isMedit = state.tab === 'medit';
+  const items = isMedit ? MEDITATIONS : TECHNIQUES;
+  const curId = isMedit ? state.meditationId : state.techniqueId;
+  for (const item of items) {
     const card = document.createElement('button');
-    card.className = 'tech-card' + (tech.id === state.techniqueId ? ' on' : '');
+    card.className = 'tech-card' + (item.id === curId ? ' on' : '');
+    const label = isMedit ? item.tag[state.lang] : item.pattern;
     card.innerHTML = `
-      <div class="tech-name"><span>${tech.name[state.lang]}</span><span class="tech-pattern">${tech.pattern}</span></div>
-      <div class="tech-desc">${tech.desc[state.lang]}</div>`;
+      <div class="tech-name"><span>${item.name[state.lang]}</span><span class="tech-pattern">${label}</span></div>
+      <div class="tech-desc">${item.desc[state.lang]}</div>`;
     card.addEventListener('click', () => {
-      state.techniqueId = tech.id;
-      localStorage.setItem('bd_technique', tech.id);
+      if (isMedit) {
+        state.meditationId = item.id;
+        localStorage.setItem('bd_meditation', item.id);
+      } else {
+        state.techniqueId = item.id;
+        localStorage.setItem('bd_technique', item.id);
+      }
       renderTechniques();
     });
     list.appendChild(card);
   }
+  // вкладки
+  $('tab-breath').classList.toggle('on', !isMedit);
+  $('tab-medit').classList.toggle('on', isMedit);
   // у Вима Хофа своя структура — выбор длительности не используется
-  const wim = (TECHNIQUES.find((x) => x.id === state.techniqueId) || TECHNIQUES[0]).mode === 'wimhof';
+  const wim = !isMedit && (TECHNIQUES.find((x) => x.id === state.techniqueId) || TECHNIQUES[0]).mode === 'wimhof';
   $('duration-row').style.display = wim ? 'none' : '';
+  $('ambient-row').style.display = isMedit ? '' : 'none';
+  $('vibro-row').style.display = isMedit ? 'none' : '';
+  renderDurationSeg();
+  renderAmbientSeg();
+}
+
+function renderDurationSeg() {
+  const seg = $('duration-seg');
+  seg.innerHTML = '';
+  const isMedit = state.tab === 'medit';
+  const opts = isMedit ? [5, 10, 15, 20] : [1, 3, 5, 10];
+  const cur = isMedit ? state.medMinutes : state.minutes;
+  for (const m of opts) {
+    const b = document.createElement('button');
+    b.textContent = `${m} ${t('min')}`;
+    b.classList.toggle('on', m === cur);
+    b.addEventListener('click', () => {
+      if (isMedit) { state.medMinutes = m; localStorage.setItem('bd_medminutes', m); }
+      else { state.minutes = m; localStorage.setItem('bd_minutes', m); }
+      renderDurationSeg();
+    });
+    seg.appendChild(b);
+  }
+}
+
+function renderAmbientSeg() {
+  const seg = $('ambient-seg');
+  seg.innerHTML = '';
+  for (const a of ['off', 'rain', 'ocean']) {
+    const b = document.createElement('button');
+    b.textContent = t('amb_' + a);
+    b.classList.toggle('on', a === state.ambient);
+    b.addEventListener('click', () => {
+      state.ambient = a;
+      localStorage.setItem('bd_ambient', a);
+      renderAmbientSeg();
+      if (med.running && !med.paused) { stopAmbient(); startAmbient(a); }
+    });
+    seg.appendChild(b);
+  }
 }
 
 function initOptions() {
-  const seg = $('duration-seg');
-  for (const b of seg.querySelectorAll('button')) {
-    b.classList.toggle('on', Number(b.dataset.min) === state.minutes);
-    b.addEventListener('click', () => {
-      state.minutes = Number(b.dataset.min);
-      localStorage.setItem('bd_minutes', state.minutes);
-      for (const x of seg.querySelectorAll('button')) x.classList.toggle('on', x === b);
-    });
-  }
   const bindToggle = (id, key) => {
     const el = $(id);
     el.classList.toggle('on', state[key]);
@@ -319,6 +454,14 @@ function initOptions() {
     localStorage.setItem('bd_lang', state.lang);
     applyLang();
   });
+
+  const setTab = (tab) => {
+    state.tab = tab;
+    localStorage.setItem('bd_tab', tab);
+    renderTechniques();
+  };
+  $('tab-breath').addEventListener('click', () => setTab('breath'));
+  $('tab-medit').addEventListener('click', () => setTab('medit'));
 }
 
 function showScreen(id) {
@@ -355,6 +498,69 @@ function beep(freq, durMs = 700) {
   } catch { /* звук недоступен — молча продолжаем */ }
 }
 const PHASE_FREQ = { inhale: 440, inhale2: 494, exhale: 294, hold: 370 };
+
+// гонг: три затухающих гармоники, ~3.5 секунды
+function gong() {
+  if (!state.sound) return;
+  try {
+    ensureAudio();
+    if (!audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    [196, 392, 588].forEach((f, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.12 / (i + 1), t0 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.5);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t0);
+      o.stop(t0 + 3.6);
+    });
+  } catch { /* звук недоступен */ }
+}
+
+// фоновый шум: фильтрованный белый шум; океан — с медленной волной громкости
+const ambient = { src: null, lfo: null };
+function startAmbient(type) {
+  if (!state.sound || type === 'off') return;
+  try {
+    ensureAudio();
+    if (!audioCtx) return;
+    stopAmbient();
+    const len = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = true;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = type === 'rain' ? 1400 : 500;
+    const gain = audioCtx.createGain();
+    gain.gain.value = type === 'rain' ? 0.05 : 0.045;
+    src.connect(filter).connect(gain).connect(audioCtx.destination);
+    if (type === 'ocean') {
+      const lfo = audioCtx.createOscillator();
+      lfo.frequency.value = 0.08;
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.value = 0.035;
+      lfo.connect(lfoGain).connect(gain.gain);
+      lfo.start();
+      ambient.lfo = lfo;
+    }
+    src.start();
+    ambient.src = src;
+  } catch { /* звук недоступен */ }
+}
+function stopAmbient() {
+  try { if (ambient.src) ambient.src.stop(); } catch { /* уже остановлен */ }
+  try { if (ambient.lfo) ambient.lfo.stop(); } catch { /* уже остановлен */ }
+  ambient.src = null;
+  ambient.lfo = null;
+}
 
 function buzz() {
   if (state.vibro && navigator.vibrate) navigator.vibrate(60);
@@ -496,6 +702,7 @@ function stopSession() {
 
 function finishSession() {
   stopSession();
+  lastMode = 'breath';
   const wim = session.technique.mode === 'wimhof';
   const minutes = wim
     ? Math.max(1, Math.round((performance.now() - session.startedAt) / 60000))
@@ -518,10 +725,123 @@ function quitSession() {
   renderStats();
 }
 
+// ---------- Meditation engine ----------
+const med = {
+  running: false,
+  paused: false,
+  item: null,
+  startAt: 0,
+  endAt: 0,
+  prompts: [],
+  nextPrompt: 0,
+  pauseStart: 0,
+  raf: 0,
+};
+
+let lastMode = 'breath'; // что перезапускает «Ещё раз» на экране итогов
+
+function showPrompt(text) {
+  const el = $('medit-prompt');
+  el.classList.remove('show');
+  void el.offsetWidth; // перезапуск CSS-анимации появления
+  el.textContent = text;
+  el.classList.add('show');
+}
+
+function startMeditation() {
+  cancelAnimationFrame(med.raf);
+  med.item = MEDITATIONS.find((x) => x.id === state.meditationId) || MEDITATIONS[0];
+  med.running = true;
+  med.paused = false;
+  const durMs = state.medMinutes * 60000;
+  med.startAt = performance.now();
+  med.endAt = med.startAt + durMs;
+  // подсказки распределяются по сессии; последняя — ближе к концу
+  const list = med.item.prompts;
+  const usable = Math.max(0, durMs - 45000);
+  med.prompts = list.map((p, i) => ({
+    text: p,
+    at: med.startAt + (list.length > 1 ? (i * usable) / (list.length - 1) : 0),
+  }));
+  med.nextPrompt = 0;
+  $('medit-title').textContent = med.item.name[state.lang];
+  $('medit-time').textContent = fmtTime(durMs / 1000);
+  $('medit-prompt').textContent = '';
+  $('btn-medit-pause').textContent = t('pause');
+  showScreen('screen-medit');
+  if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (med.lock = l)).catch(() => {});
+  ensureAudio();
+  gong();
+  startAmbient(state.ambient);
+  med.raf = requestAnimationFrame(meditTick);
+}
+
+function meditTick(now) {
+  if (!med.running || med.paused) return;
+  if (now >= med.endAt) { finishMeditation(); return; }
+  while (med.nextPrompt < med.prompts.length && now >= med.prompts[med.nextPrompt].at) {
+    showPrompt(med.prompts[med.nextPrompt].text[state.lang]);
+    med.nextPrompt++;
+  }
+  $('medit-time').textContent = fmtTime((med.endAt - now) / 1000);
+  med.raf = requestAnimationFrame(meditTick);
+}
+
+function toggleMeditPause() {
+  if (!med.running) return;
+  const now = performance.now();
+  if (!med.paused) {
+    med.paused = true;
+    med.pauseStart = now;
+    stopAmbient();
+    $('btn-medit-pause').textContent = t('resume');
+  } else {
+    med.paused = false;
+    const delta = now - med.pauseStart;
+    med.endAt += delta;
+    for (const p of med.prompts) p.at += delta;
+    startAmbient(state.ambient);
+    $('btn-medit-pause').textContent = t('pause');
+    med.raf = requestAnimationFrame(meditTick);
+  }
+}
+
+function stopMeditation() {
+  med.running = false;
+  cancelAnimationFrame(med.raf);
+  stopAmbient();
+  if (med.lock) { med.lock.release().catch(() => {}); med.lock = null; }
+}
+
+function finishMeditation() {
+  stopMeditation();
+  gong();
+  lastMode = 'medit';
+  const s = recordSession(state.medMinutes);
+  $('done-summary').textContent =
+    `${med.item.name[state.lang]} · ${state.medMinutes} ${t('min')}. ${t('total_label')}: ${s.total}.`;
+  $('done-streak').textContent = s.streak > 1 ? t('streak_fire')(s.streak) : t('streak_first');
+  if (state.vibro && navigator.vibrate) navigator.vibrate([80, 60, 80]);
+  showScreen('screen-done');
+  renderStats();
+}
+
+function quitMeditation() {
+  stopMeditation();
+  showScreen('screen-home');
+  renderStats();
+}
+
 // возврат из фона: рабочая блокировка экрана слетает, фаза устаревает —
 // заново берём wake lock и мягко перезапускаем текущую фазу с текущего размера круга
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden || !session.running || session.paused) return;
+  if (document.hidden) return;
+  if (med.running && !med.paused) {
+    // отложенный rAF сам сработает при возврате — достаточно вернуть wake lock
+    if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (med.lock = l)).catch(() => {});
+    return;
+  }
+  if (!session.running || session.paused) return;
   if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (session.lock = l)).catch(() => {});
   const now = performance.now();
   if (now >= session.phaseEndAt && now < session.endAt) {
@@ -535,8 +855,16 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ---------- Wire up ----------
-$('btn-start').addEventListener('click', startSession);
-$('btn-again').addEventListener('click', startSession);
+$('btn-start').addEventListener('click', () => {
+  if (state.tab === 'medit') startMeditation();
+  else startSession();
+});
+$('btn-again').addEventListener('click', () => {
+  if (lastMode === 'medit') startMeditation();
+  else startSession();
+});
+$('btn-medit-pause').addEventListener('click', toggleMeditPause);
+$('btn-medit-close').addEventListener('click', quitMeditation);
 $('btn-pause').addEventListener('click', () => {
   const p = session.running && session.phaseIdx >= 0 && session.technique.phases[session.phaseIdx];
   if (p && p.key === 'retention' && !session.paused) {
