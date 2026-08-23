@@ -238,7 +238,8 @@ function ensureAudio() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
   } catch { /* звук недоступен */ }
 }
-function beep(freq, durMs = 350) {
+// мягкий длинный «вздох» тона вместо резкого гудка: долгая атака, тихий пик, плавный спад
+function beep(freq, durMs = 700) {
   if (!state.sound) return;
   try {
     ensureAudio();
@@ -247,12 +248,13 @@ function beep(freq, durMs = 350) {
     const g = audioCtx.createGain();
     o.type = 'sine';
     o.frequency.value = freq;
-    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.04);
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + durMs / 1000);
+    const t0 = audioCtx.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.18);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + durMs / 1000);
     o.connect(g).connect(audioCtx.destination);
     o.start();
-    o.stop(audioCtx.currentTime + durMs / 1000 + 0.05);
+    o.stop(t0 + durMs / 1000 + 0.05);
   } catch { /* звук недоступен — молча продолжаем */ }
 }
 const PHASE_FREQ = { inhale: 440, exhale: 294, hold: 370 };
@@ -315,14 +317,16 @@ function nextPhase(now) {
   buzz();
 }
 
-function easeInOut(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+// синусоида — естественный профиль дыхания: без рывка в середине и «парковки» на стыках фаз
+function easeInOut(t) { return (1 - Math.cos(Math.PI * t)) / 2; }
 
 function tick(now) {
   if (!session.running) return;
   if (session.paused) return;
 
   if (now >= session.endAt) { finishSession(); return; }
-  if (now >= session.phaseEndAt) nextPhase(now);
+  // phaseIdx < 0: первый кадр — rAF может отдать время чуть раньше старта сессии
+  if (session.phaseIdx < 0 || now >= session.phaseEndAt) nextPhase(now);
 
   const p = session.technique.phases[session.phaseIdx];
   const k = Math.min(1, (now - session.phaseStartAt) / (p.dur * 1000));
