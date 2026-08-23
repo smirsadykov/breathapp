@@ -22,7 +22,11 @@ const I18N = {
     streak_first: 'Первый день серии — приходи завтра',
     again: 'Ещё раз',
     home: 'На главную',
-    phase: { inhale: 'Вдох', inhale2: 'Ещё вдох', hold: 'Задержка', exhale: 'Выдох' },
+    round: 'Раунд',
+    breathe_in: 'Вдохнуть',
+    holds: 'Задержки',
+    sec: 'с',
+    phase: { inhale: 'Вдох', inhale2: 'Ещё вдох', hold: 'Задержка', exhale: 'Выдох', retention: 'Задержка' },
   },
   en: {
     title: 'Breathe',
@@ -45,13 +49,34 @@ const I18N = {
     streak_first: 'Day one of your streak — come back tomorrow',
     again: 'Again',
     home: 'Home',
-    phase: { inhale: 'Inhale', inhale2: 'Inhale again', hold: 'Hold', exhale: 'Exhale' },
+    round: 'Round',
+    breathe_in: 'Breathe in',
+    holds: 'Holds',
+    sec: 's',
+    phase: { inhale: 'Inhale', inhale2: 'Inhale again', hold: 'Hold', exhale: 'Exhale', retention: 'Hold' },
   },
 };
 
 // «немой» разворот: круг замирает на ~0.4с без сигнала и смены надписи —
 // вставляется там, где вдох и выдох стыкуются напрямую, без задержки
 const TURN = (at) => ({ key: 'turn', dur: 0.4, to: at });
+
+// раунд в стиле Вима Хофа: 30 глубоких дыханий → задержка на выдохе (без лимита,
+// завершается кнопкой) → восстановление: вдох, задержка 15с, выдох
+function buildWimhof(rounds = 3) {
+  const ph = [];
+  for (let r = 1; r <= rounds; r++) {
+    for (let i = 1; i <= 30; i++) {
+      ph.push({ key: 'inhale', dur: 1.5, to: 1, breath: i, round: r });
+      ph.push({ key: 'exhale', dur: 1.5, to: 0.6, breath: i, round: r });
+    }
+    ph.push({ key: 'retention', dur: Infinity, to: 0.6, round: r });
+    ph.push({ key: 'inhale', dur: 2, to: 1, round: r });
+    ph.push({ key: 'hold', dur: 15, to: 1, round: r });
+    ph.push({ key: 'exhale', dur: 3, to: 0.55, round: r });
+  }
+  return ph;
+}
 
 const TECHNIQUES = [
   {
@@ -160,6 +185,17 @@ const TECHNIQUES = [
       TURN(0.55),
     ],
   },
+  {
+    id: 'wimhof',
+    mode: 'wimhof',
+    name: { ru: 'Вим Хоф', en: 'Wim Hof style' },
+    pattern: '3×30',
+    desc: {
+      ru: '3 раунда: 30 глубоких дыханий, задержка на выдохе сколько сможешь, восстановление. Только сидя или лёжа — не в воде и не за рулём.',
+      en: '3 rounds: 30 deep breaths, hold on empty lungs as long as you can, then recover. Only seated or lying down — never in water or while driving.',
+    },
+    phases: buildWimhof(),
+  },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -226,7 +262,9 @@ function applyLang() {
     const p = session.technique.phases[session.phaseIdx];
     const key = p ? (p.key === 'turn' ? session.lastMoveKey : p.key) : null;
     $('phase-name').textContent = session.paused ? t('paused') : (key ? phaseName(key) : t('get_ready'));
-    $('btn-pause').textContent = session.paused ? t('resume') : t('pause');
+    const isRet = p && p.key === 'retention' && !session.paused;
+    $('btn-pause').textContent = session.paused ? t('resume') : (isRet ? t('breathe_in') : t('pause'));
+    if (session.technique.mode === 'wimhof' && p && p.round) $('time-left').textContent = `${t('round')} ${p.round}/3`;
   }
   renderTechniques();
 }
@@ -248,6 +286,9 @@ function renderTechniques() {
     });
     list.appendChild(card);
   }
+  // у Вима Хофа своя структура — выбор длительности не используется
+  const wim = (TECHNIQUES.find((x) => x.id === state.techniqueId) || TECHNIQUES[0]).mode === 'wimhof';
+  $('duration-row').style.display = wim ? 'none' : '';
 }
 
 function initOptions() {
@@ -343,16 +384,19 @@ function startSession() {
   session.technique = TECHNIQUES.find((x) => x.id === state.techniqueId) || TECHNIQUES[0];
   session.running = true;
   session.paused = false;
-  session.endAt = performance.now() + state.minutes * 60000;
+  session.startedAt = performance.now();
+  session.endAt = session.technique.mode === 'wimhof' ? Infinity : performance.now() + state.minutes * 60000;
   session.phaseIdx = -1;
   session.phaseEndAt = performance.now(); // сразу перейдём к первой фазе
   session.fromScale = 0.55;
   session.curScale = 0.55;
   session.lastMoveKey = null;
+  session.retentions = [];
+  session.retEndedAt = 0;
   $('bubble').style.transform = 'scale(0.55)';
   $('session-technique').textContent = session.technique.name[state.lang];
   $('phase-name').textContent = t('get_ready');
-  $('time-left').textContent = fmtTime(state.minutes * 60);
+  $('time-left').textContent = session.technique.mode === 'wimhof' ? `${t('round')} 1/3` : fmtTime(state.minutes * 60);
   $('phase-count').textContent = '';
   $('btn-pause').textContent = t('pause');
   showScreen('screen-session');
@@ -361,20 +405,34 @@ function startSession() {
   session.raf = requestAnimationFrame(tick);
 }
 
+// возвращает true, если фазы кончились и сессия завершена (только Вим Хоф — он не зациклен)
 function nextPhase(now) {
   const phases = session.technique.phases;
   const prev = phases[session.phaseIdx];
   session.fromScale = prev ? prev.to : 0.55;
-  session.phaseIdx = (session.phaseIdx + 1) % phases.length;
+  session.phaseIdx += 1;
+  if (session.phaseIdx >= phases.length) {
+    if (session.technique.mode === 'wimhof') { finishSession(); return true; }
+    session.phaseIdx = 0;
+  }
   const p = phases[session.phaseIdx];
   session.phaseStartAt = now;
   session.phaseEndAt = now + p.dur * 1000;
   if (p.key !== 'turn') {
     session.lastMoveKey = p.key;
     $('phase-name').textContent = phaseName(p.key);
-    beep(PHASE_FREQ[p.key] || 370);
-    buzz();
+    if (p.key === 'retention') {
+      beep(220, 900); // низкий длинный тон: начало задержки
+      buzz();
+      $('btn-pause').textContent = t('breathe_in');
+    } else {
+      beep(PHASE_FREQ[p.key] || 370, p.breath ? 250 : 700);
+      if (!p.breath) buzz(); // в быстром дыхании не дёргаем вибрацией 60 раз
+      if (prev && prev.key === 'retention') $('btn-pause').textContent = t('pause');
+    }
   }
+  if (p.round) $('time-left').textContent = `${t('round')} ${p.round}/3`;
+  return false;
 }
 
 // синусоида — естественный профиль дыхания: без рывка в середине и «парковки» на стыках фаз
@@ -386,7 +444,9 @@ function tick(now) {
 
   if (now >= session.endAt) { finishSession(); return; }
   // phaseIdx < 0: первый кадр — rAF может отдать время чуть раньше старта сессии
-  if (session.phaseIdx < 0 || now >= session.phaseEndAt) nextPhase(now);
+  if (session.phaseIdx < 0 || now >= session.phaseEndAt) {
+    if (nextPhase(now)) return;
+  }
 
   const p = session.technique.phases[session.phaseIdx];
   const k = Math.min(1, (now - session.phaseStartAt) / (p.dur * 1000));
@@ -394,9 +454,14 @@ function tick(now) {
   session.curScale = scale;
   $('bubble').style.transform = `scale(${scale.toFixed(4)})`;
 
-  const phaseLeft = (session.phaseEndAt - now) / 1000;
-  if (p.key !== 'turn') $('phase-count').textContent = Math.ceil(phaseLeft);
-  $('time-left').textContent = fmtTime((session.endAt - now) / 1000);
+  if (p.key === 'retention') {
+    $('phase-count').textContent = Math.floor((now - session.phaseStartAt) / 1000); // секундомер
+  } else if (p.breath) {
+    $('phase-count').textContent = p.breath; // номер дыхания 1..30
+  } else if (p.key !== 'turn') {
+    $('phase-count').textContent = Math.ceil((session.phaseEndAt - now) / 1000);
+  }
+  if (session.technique.mode !== 'wimhof') $('time-left').textContent = fmtTime((session.endAt - now) / 1000);
 
   session.raf = requestAnimationFrame(tick);
 }
@@ -431,9 +496,16 @@ function stopSession() {
 
 function finishSession() {
   stopSession();
-  const s = recordSession(state.minutes);
+  const wim = session.technique.mode === 'wimhof';
+  const minutes = wim
+    ? Math.max(1, Math.round((performance.now() - session.startedAt) / 60000))
+    : state.minutes;
+  const s = recordSession(minutes);
+  const holds = wim && session.retentions.length
+    ? ` ${t('holds')}: ${session.retentions.map((x) => `${x}${t('sec')}`).join(' · ')}.`
+    : '';
   $('done-summary').textContent =
-    `${session.technique.name[state.lang]} · ${state.minutes} ${t('min')}. ${t('total_label')}: ${s.total}.`;
+    `${session.technique.name[state.lang]} · ${minutes} ${t('min')}.${holds} ${t('total_label')}: ${s.total}.`;
   $('done-streak').textContent = s.streak > 1 ? t('streak_fire')(s.streak) : t('streak_first');
   if (state.vibro && navigator.vibrate) navigator.vibrate([80, 60, 80]);
   showScreen('screen-done');
@@ -465,7 +537,18 @@ document.addEventListener('visibilitychange', () => {
 // ---------- Wire up ----------
 $('btn-start').addEventListener('click', startSession);
 $('btn-again').addEventListener('click', startSession);
-$('btn-pause').addEventListener('click', togglePause);
+$('btn-pause').addEventListener('click', () => {
+  const p = session.running && session.phaseIdx >= 0 && session.technique.phases[session.phaseIdx];
+  if (p && p.key === 'retention' && !session.paused) {
+    // конец задержки: записываем время и идём на восстановление
+    session.retentions.push(Math.max(0, Math.round((performance.now() - session.phaseStartAt) / 1000)));
+    session.retEndedAt = performance.now();
+    nextPhase(performance.now());
+    return;
+  }
+  if (performance.now() - session.retEndedAt < 400) return; // случайный двойной тап после задержки
+  togglePause();
+});
 $('btn-close').addEventListener('click', quitSession);
 $('btn-home').addEventListener('click', () => showScreen('screen-home'));
 
