@@ -15,7 +15,8 @@ const I18N = {
     resume: 'Продолжить',
     paused: 'Пауза',
     get_ready: 'Приготовься',
-    hint: 'Дыши вместе с кругом',
+    hint_belly: 'Дыши животом — грудь почти неподвижна',
+    hint_wimhof: 'Дыши глубоко и мощно — животом и грудью',
     done_title: 'Сессия завершена',
     total_label: 'Всего сессий',
     streak_fire: (n) => `🔥 ${n} дней подряд`,
@@ -48,7 +49,8 @@ const I18N = {
     resume: 'Resume',
     paused: 'Paused',
     get_ready: 'Get ready',
-    hint: 'Breathe with the circle',
+    hint_belly: 'Breathe with your belly — chest almost still',
+    hint_wimhof: 'Breathe deep and strong — belly and chest',
     done_title: 'Session complete',
     total_label: 'Total sessions',
     streak_fire: (n) => `🔥 ${n} days in a row`,
@@ -213,6 +215,26 @@ const TECHNIQUES = [
 // медитации: экранные подсказки — собственные тексты, распределяются по длительности сессии
 const MEDITATIONS = [
   {
+    id: 'belly',
+    name: { ru: 'Дыхание животом', en: 'Belly breathing' },
+    tag: { ru: 'гид', en: 'guided' },
+    desc: {
+      ru: 'Учимся дышать диафрагмой: рука на груди, рука на животе. База для всех остальных практик.',
+      en: 'Learn diaphragmatic breathing: one hand on the chest, one on the belly. The base for every other practice.',
+    },
+    prompts: [
+      { ru: 'Ляг или сядь с прямой спиной. Одну ладонь положи на грудь, другую — на живот.', en: 'Lie down or sit with a straight back. Put one palm on your chest, the other on your belly.' },
+      { ru: 'Дыши как обычно и просто наблюдай: какая ладонь двигается больше?', en: 'Breathe as usual and just watch: which palm moves more?' },
+      { ru: 'Теперь направь вдох вниз, в живот. Ладонь на животе поднимается, на груди — почти нет.', en: 'Now send the breath down into the belly. The belly palm rises, the chest palm barely moves.' },
+      { ru: 'Вдох через нос — живот мягко надувается. Выдох — живот опускается.', en: 'Inhale through the nose — the belly gently rises. Exhale — it falls.' },
+      { ru: 'Не старайся дышать глубоко. Важно не сколько воздуха, а куда он идёт.', en: 'Do not try to breathe deeply. What matters is not how much air, but where it goes.' },
+      { ru: 'Грудь всё ещё двигается? Выдохни до конца — и позволь следующему вдоху самому упасть в живот.', en: 'Chest still moving? Exhale fully — and let the next breath drop into the belly on its own.' },
+      { ru: 'Побудь с этим: вдох — живот вверх, выдох — вниз. Спокойно, без усилия.', en: 'Stay with it: inhale — belly up, exhale — down. Calm, no effort.' },
+      { ru: 'Запомни это ощущение. Так можно дышать в любой момент дня.', en: 'Remember this feeling. You can breathe like this at any moment of the day.' },
+      { ru: 'Вдох поглубже, потянись и открой глаза.', en: 'Take a deeper breath, stretch, and open your eyes.' },
+    ],
+  },
+  {
     id: 'breath_focus',
     name: { ru: 'Наблюдение за дыханием', en: 'Breath awareness' },
     tag: { ru: 'гид', en: 'guided' },
@@ -356,6 +378,7 @@ function applyLang() {
     $('phase-name').textContent = session.paused ? t('paused') : (key ? phaseName(key) : t('get_ready'));
     const isRet = p && p.key === 'retention' && !session.paused;
     $('btn-pause').textContent = session.paused ? t('resume') : (isRet ? t('breathe_in') : t('pause'));
+    $('session-hint').textContent = t(session.technique.mode === 'wimhof' ? 'hint_wimhof' : 'hint_belly');
     if (session.technique.mode === 'wimhof' && p && p.round) $('time-left').textContent = `${t('round')} ${p.round}/3`;
   }
   renderTechniques();
@@ -605,6 +628,7 @@ function startSession() {
   $('time-left').textContent = session.technique.mode === 'wimhof' ? `${t('round')} 1/3` : fmtTime(state.minutes * 60);
   $('phase-count').textContent = '';
   $('btn-pause').textContent = t('pause');
+  $('session-hint').textContent = t(session.technique.mode === 'wimhof' ? 'hint_wimhof' : 'hint_belly');
   showScreen('screen-session');
   if (navigator.wakeLock) navigator.wakeLock.request('screen').then((l) => (session.lock = l)).catch(() => {});
   ensureAudio(); // разблокировать аудио по клику, без звука
